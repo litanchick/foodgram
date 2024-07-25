@@ -4,6 +4,7 @@ from django.core.files.base import ContentFile
 from rest_framework.generics import get_object_or_404
 from rest_framework import serializers
 from django.utils.text import slugify
+# from djoser.serializers import UserSerializer
 
 from .models import Ingredients, ListFavorite, ListIngredients, Recipes, Tags
 from users.models import User, ListSubscriptions
@@ -57,7 +58,7 @@ class UserSerializer(serializers.ModelSerializer):
         return None
 
 
-# class SingUpSerializer(serializers.ModelSerializer):
+# class SingUpSerializer():
 #     """Сериализатор для регистрации пользователя."""
 
 #     def to_representation(self, instance):

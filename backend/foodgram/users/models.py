@@ -1,12 +1,66 @@
 from django.core.validators import RegexValidator
-from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
 from django.db import models
 from django.core.validators import validate_email
 
 from .constans import CHAR_MAX_LENGTH, EMAIL_MAX_LENGTH
 
 
-class User(AbstractUser):
+class UserManager(BaseUserManager):
+    """Кастомный менеджер создания пользователя."""
+
+    use_in_migrations = True
+
+    def _create_user(
+            self, email, username,
+            first_name, last_name,
+            password
+    ):
+        """Переопределение создания пользователя."""
+        if not email:
+            raise ValueError('Почта - обязательное поле для регистрации.')
+        if not username:
+            raise ValueError('Username - обязательное поле для регистрации.')
+        if not first_name:
+            raise ValueError('Имя - обязательное поле для регистрации.')
+        if not last_name:
+            raise ValueError('Фамилия - обязательное поле для регистрации.')
+        email = self.normalize_email(email)
+        username = self.model.normalize_username(username)
+        user = self.model(
+            email=email, username=username, first_name=first_name,
+            last_name=last_name
+        )
+        user.set_password(password)
+        user.save(using=self._db)
+        return user
+
+    def create_user(
+            self, email, username,
+            first_name, last_name,
+            password=None
+    ):
+        return self._create_user(
+            email, username, first_name, last_name, password
+        )
+
+    def create_superuser(
+            self, email, username,
+            first_name, last_name,
+            password, **extra_fields
+    ):
+        extra_fields.setdefault('is_staff', True)
+        extra_fields.setdefault('is_superuser', True)
+        if extra_fields.get('is_staff') is not True:
+            raise ValueError('Superuser must have is_staff=True.')
+        if extra_fields.get('is_superuser') is not True:
+            raise ValueError('Superuser must have is_superuser=True.')
+        return self._create_user(
+            email, username, first_name, last_name, password, **extra_fields
+        )
+
+
+class User(AbstractBaseUser):
     """Кастомная модель пользователя."""
 
     email = models.EmailField(
@@ -14,6 +68,14 @@ class User(AbstractUser):
         validators=[validate_email],
         unique=True,
         max_length=EMAIL_MAX_LENGTH,
+    )
+    first_name = models.CharField(
+        max_length=CHAR_MAX_LENGTH,
+        verbose_name='Имя',
+    )
+    last_name = models.CharField(
+        max_length=CHAR_MAX_LENGTH,
+        verbose_name='Фамилия',
     )
     username = models.CharField(
         'Уникальный юзернейм',
@@ -33,6 +95,8 @@ class User(AbstractUser):
     )
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username', 'first_name', 'last_name']
+
+    objects = UserManager()
 
     class Meta:
         verbose_name = 'Пользователь'
