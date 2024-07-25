@@ -2,6 +2,7 @@ from django.core.validators import RegexValidator
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
 from django.db import models
 from django.core.validators import validate_email
+from django.contrib.auth.models import PermissionsMixin
 
 from .constans import CHAR_MAX_LENGTH, EMAIL_MAX_LENGTH
 
@@ -60,7 +61,7 @@ class UserManager(BaseUserManager):
         )
 
 
-class User(AbstractBaseUser):
+class User(AbstractBaseUser, PermissionsMixin):
     """Кастомная модель пользователя."""
 
     email = models.EmailField(
@@ -93,6 +94,8 @@ class User(AbstractBaseUser):
         null=True,
         default=None,
     )
+    is_active = models.BooleanField(default=True)
+    is_staff = models.BooleanField(default=False)
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username', 'first_name', 'last_name']
 
