@@ -4,7 +4,6 @@ from django.core.files.base import ContentFile
 from rest_framework.generics import get_object_or_404
 from rest_framework import serializers
 from django.utils.text import slugify
-# from djoser.serializers import UserSerializer
 
 from .models import Ingredients, ListFavorite, ListIngredients, Recipes, Tags
 from users.models import User, ListSubscriptions
@@ -22,19 +21,15 @@ class Base64ImageField(serializers.ImageField):
 
 
 class UserSerializer(serializers.ModelSerializer):
-    """Сериализатор пользователя."""
+    """Сериализатор для юзера."""
 
-    is_subscribed = serializers.ModelField('get_subscribed', read_only=True)
-    avatar = serializers.ModelField(
-        'get_image_url',
-        read_only=True,
-    )
+    is_subscribed = serializers.SerializerMethodField()
 
     class Meta:
         model = User
         fields = (
-            'email',
             'id',
+            'email',
             'username',
             'first_name',
             'last_name',
@@ -42,35 +37,23 @@ class UserSerializer(serializers.ModelSerializer):
             'avatar',
         )
 
-    def get_subscribed(self, data, instance):
-        username = data.get('username')
-        subscribe = instance.user.username
-        if ListSubscriptions.objects.filter(
-            author=username,
-            subscription_on=subscribe
-        ).exists():
+    def get_is_subscribed(self, obj):
+        user = self.context['request'].user
+        if user.is_anonymous:
             return False
-        return True
-
-    def get_image_url(self, obj):
-        if obj.image:
-            return obj.image.url
-        return None
+        return ListSubscriptions.objects.filter(
+            author=user, subscription_on=obj
+        ).exists()
 
 
-# class SingUpSerializer():
-#     """Сериализатор для регистрации пользователя."""
+class UserAvatarSerializer(UserSerializer):
+    """Сериализатор для аватара юзера."""
 
-#     def to_representation(self, instance):
-#         data = super().to_representation(instance)
-#         data.pop('password')
-#         return data
+    avatar = Base64ImageField(required=False, allow_null=True)
 
-#     class Meta:
-#         fields = (
-#             'email', 'id', 'username', 'first_name', 'last_name', 'password'
-#         )
-#         model = User
+    class Meta:
+        model = User
+        fields = ('avatar',)
 
 
 class TagsSerializer(serializers.Serializer):

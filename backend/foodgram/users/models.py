@@ -106,9 +106,6 @@ class User(AbstractBaseUser, PermissionsMixin):
         verbose_name_plural = 'Пользователи'
         ordering = ('username',)
 
-    def __str__(self):
-        return self.username
-
 
 class ListSubscriptions(models.Model):
     author = models.ForeignKey(

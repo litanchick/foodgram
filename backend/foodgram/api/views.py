@@ -1,9 +1,10 @@
-from rest_framework import viewsets, filters
+from rest_framework import viewsets, filters, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.generics import get_object_or_404
 from django.shortcuts import get_list_or_404
+from django.http import HttpResponse
 import pandas as pd
 
 from .serializers import (
@@ -14,6 +15,7 @@ from .serializers import (
     RecipesSerializer,
     ListSubscriptionsSerialaizer,
     ListIngredientsSerializer,
+    UserAvatarSerializer,
 )
 from .models import (
     User, Tags, Ingredients, ListFavorite, Recipes, Units,
@@ -26,6 +28,7 @@ from .pagination import PaginationNumber
 class UsersViewSet(viewsets.ModelViewSet):
     """Управление пользователями."""
 
+    permission_classes = [AllowAny,]
     queryset = User.objects.all()
     serializer_class = UserSerializer
     lookup_field = 'username'
@@ -33,24 +36,24 @@ class UsersViewSet(viewsets.ModelViewSet):
     search_fields = ('username',)
     pagination_class = (PaginationNumber,)
 
-    # @action(
-    #     detail=False,
-    #     methods=['get'],
-    #     permission_classes=(IsAuthenticated,),
-    # )
-    # def me(self, request):
-    #     serializer = self.get_serializer(
-    #         request.user,
-    #         data=request.data,
-    #     )
-    #     serializer.is_valid(raise_exception=True)
-    #     return Response(serializer.data)
+    @action(
+        detail=False,
+        methods=['get'],
+        permission_classes=(IsAuthenticated,),
+        url_path='me',
+    )
+    def me(self, request):
+        if User.objects.filter(user=request.user).exists():
+            user = request.user
+            serializer = UserSerializer(user, context={"request": request})
+            return Response(serializer.data)
 
     @action(
         detail=False,
         methods=['put', 'delete'],
         permission_classes=(IsAuthenticated,),
         url_path='me/avatar',
+        serializer_class=UserAvatarSerializer,
     )
     def avatar(self, request):
         serializer = self.get_serializer(
@@ -58,8 +61,12 @@ class UsersViewSet(viewsets.ModelViewSet):
             data=request.data,
             partial=True,
         )
-        serializer.is_valid(raise_exception=True)
-        return Response(serializer.data.avatar)
+        if request.method == 'PUT':
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            return Response(serializer.data)
+        else:
+            serializer.avatar.delete()
 
     @action(
         detail=False,
