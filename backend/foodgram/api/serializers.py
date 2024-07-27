@@ -49,7 +49,7 @@ class UserSerializer(serializers.ModelSerializer):
 class UserAvatarSerializer(UserSerializer):
     """Сериализатор для аватара юзера."""
 
-    avatar = Base64ImageField(required=False, allow_null=True)
+    avatar = Base64ImageField()
 
     class Meta:
         model = User

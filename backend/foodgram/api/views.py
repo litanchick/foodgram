@@ -1,14 +1,16 @@
 from rest_framework import viewsets, filters, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.permissions import IsAuthenticated
+# AllowAny
 from rest_framework.generics import get_object_or_404
 from django.shortcuts import get_list_or_404
-from django.http import HttpResponse
+# from django.http import HttpResponse
 import pandas as pd
+from djoser.views import UserViewSet
+
 
 from .serializers import (
-    UserSerializer,
     TagsSerializer,
     IngredientsSerializer,
     FavoriteSerializer,
@@ -25,28 +27,33 @@ from users.models import ListSubscriptions
 from .pagination import PaginationNumber
 
 
-class UsersViewSet(viewsets.ModelViewSet):
+class CustomUsersViewSet(UserViewSet):
     """Управление пользователями."""
 
-    permission_classes = [AllowAny,]
-    queryset = User.objects.all()
-    serializer_class = UserSerializer
+    # permission_classes = [AllowAny,]
+    # queryset = User.objects.all()
+    # serializer_class = UserSerializer
     lookup_field = 'username'
-    filter_backends = (filters.SearchFilter,)
-    search_fields = ('username',)
-    pagination_class = (PaginationNumber,)
+    # filter_backends = (filters.SearchFilter,)
+    # search_fields = ('username',)
+    # pagination_class = (PaginationNumber,)
 
-    @action(
-        detail=False,
-        methods=['get'],
-        permission_classes=(IsAuthenticated,),
-        url_path='me',
-    )
-    def me(self, request):
-        if User.objects.filter(user=request.user).exists():
-            user = request.user
-            serializer = UserSerializer(user, context={"request": request})
-            return Response(serializer.data)
+    # @action(
+    #     detail=False,
+    #     methods=['get'],
+    #     permission_classes=(IsAuthenticated,),
+    #     url_path='me',
+    #     serializer_class=UserAvatarSerializer,
+    # )
+    # def me(self, request):
+    #     if User.objects.filter(user=request.user).exists():
+    #         user = request.user
+    #         serializer = UserAvatarSerializer(
+    #           user, context={"request": request}
+    #         )
+    #         return Response(serializer.data)
+    #     else:
+    #         return Response(status=status.HTTP_400_BAD_REQUEST)
 
     @action(
         detail=False,
@@ -56,30 +63,38 @@ class UsersViewSet(viewsets.ModelViewSet):
         serializer_class=UserAvatarSerializer,
     )
     def avatar(self, request):
-        serializer = self.get_serializer(
-            request.user,
-            data=request.data,
-            partial=True,
-        )
         if request.method == 'PUT':
-            serializer.is_valid(raise_exception=True)
-            serializer.save()
-            return Response(serializer.data)
-        else:
-            serializer.avatar.delete()
+            if request.data:
+                serializer = self.get_serializer(
+                    request.user,
+                    data=request.data,
+                    partial=True,
+                )
+                serializer.is_valid(raise_exception=True)
+                serializer.save()
+                return Response(serializer.data)
+            else:
+                return Response(status=status.HTTP_400_BAD_REQUEST)
+        elif request.method == 'DELETE':
+            self.request.user.avatar.delete()
+            # user_obj = User.objects.get(email=self.request.user)
+            # user_obj = self.request.user
+            # user_obj.avatar.delete()
+            # user_obj.save()
+            return Response(status=status.HTTP_204_NO_CONTENT)
 
-    @action(
-        detail=False,
-        methods=['post'],
-        permission_classes=(IsAuthenticated,),
-    )
-    def set_password(self, request):
-        serializer = self.get_serializer(
-            request.user,
-            data=request.data,
-        )
-        serializer.is_valid(raise_exception=True)
-        return Response(serializer.data.password)
+    # @action(
+    #     detail=False,
+    #     methods=['post'],
+    #     permission_classes=(IsAuthenticated,),
+    # )
+    # def set_password(self, request):
+    #     serializer = self.get_serializer(
+    #         request.user,
+    #         data=request.data,
+    #     )
+    #     serializer.is_valid(raise_exception=True)
+    #     return Response(serializer.data.password)
 
     @action(
         detail=True,
