@@ -106,13 +106,9 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.TokenAuthentication',
     ],
-    # 'PERMISSIONS': {
-    #     'user': ['rest_framework.permissions.AllowAny'],
-    # },
-    # 'DEFAULT_PERMISSION_CLASSES': [
-    #     'rest_framework.permissions.AllowAny',
-    # ],
-
+    'DEFAULT_FILTER_BACKENDS': [
+        'django_filters.rest_framework.DjangoFilterBackend',
+    ],
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
     'PAGE_SIZE': 10,
 }
@@ -122,7 +118,7 @@ DJOSER = {
     'PERMISSIONS': {
         'user_list': ('rest_framework.permissions.IsAuthenticatedOrReadOnly',),
         'user': ('api.permissions.CustomPermissions',),
-    }, # djoser.permissions.CurrentUserOrAdminOrReadOnly
+    },
 
     'SERIALIZERS': {
         'user': 'api.serializers.UserSerializer',

@@ -10,6 +10,9 @@ from rest_framework.viewsets import generics
 import pandas as pd
 from djoser.views import UserViewSet
 from djoser.conf import settings
+from rest_framework.pagination import LimitOffsetPagination
+from .filtres import NameFilter
+from django_filters import rest_framework
 
 
 from .serializers import (
@@ -19,8 +22,10 @@ from .serializers import (
     RecipesSerializer,
     ListSubscriptionsSerialaizer,
     ListIngredientsSerializer,
+    DowmloadListIngredientsSerializer,
     UserAvatarSerializer,
     UserSerializer,
+    RecipesSerializerGet,
 )
 from .models import (
     User, Tags, Ingredients, ListFavorite, Recipes, Units,
@@ -39,7 +44,7 @@ class CustomUsersViewSet(viewsets.GenericViewSet):
     lookup_field = 'user'
     filter_backends = (filters.SearchFilter,)
     search_fields = ('username',)
-    pagination_class = (PaginationNumber,)
+    # pagination_class = PaginationNumber
 
     @action(
         detail=False,
@@ -51,12 +56,6 @@ class CustomUsersViewSet(viewsets.GenericViewSet):
         user = request.user
         serializer = UserSerializer(user, context={"request": request})
         return Response(data=serializer.data, status=status.HTTP_200_OK)
-        # serializer = self.get_serializer(
-        #     request.user,
-        #     data=request.data,
-        # )
-        # serializer.is_valid(raise_exception=True)
-        # return Response(serializer.data)
 
     @action(
         detail=False,
@@ -112,6 +111,7 @@ class TagsViewSet(viewsets.ReadOnlyModelViewSet):
 
     queryset = Tags.objects.all()
     serializer_class = TagsSerializer
+    pagination_class = None
 
 
 class IngredientsViewSet(viewsets.ReadOnlyModelViewSet):
@@ -119,39 +119,45 @@ class IngredientsViewSet(viewsets.ReadOnlyModelViewSet):
 
     queryset = Ingredients.objects.all()
     serializer_class = IngredientsSerializer
-    filter_backends = (filters.SearchFilter,)
-    search_fields = ('name',)
+    # filter_backends = (rest_framework.DjangoFilterBackend,)
+    filterset_class = NameFilter
+    pagination_class = None
+
+    # def create(self, request):
+    #     measurement_unit = request.data['measurement_unit']
+    #     unit = Units.objects.get(name=measurement_unit)
+    #     Ingredients.objects.create(name=request, measurement_unit=unit)
+    #     return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
 
 class RecipesViewSet(viewsets.ModelViewSet):
     """Управление рецептами."""
 
     queryset = Recipes.objects.all()
-    serializer_class = RecipesSerializer
-    pagination_class = (PaginationNumber,)
+    # serializer_class = RecipesSerializer
+    pagination_class = PaginationNumber
     filter_backends = (filters.SearchFilter,)
     filterset_fields = ['tags', 'is_favorite', 'is_in_shopping_cart', 'author']
 
-    def get_queryset(self):
-        if self.kwargs.get('recipe_id'):
-            review_queryset = get_object_or_404(
-                Recipes, id=self.kwargs.get('recipe_id')
-            )
-        else:
-            review_queryset = get_object_or_404(
-                Recipes, slug=self.kwargs.get('slug')
-            )
-        return review_queryset
+    # def get_queryset(self):
+    #     review_queryset = get_object_or_404(
+    #         Recipes, id=self.kwargs.get('recipe_id')
+    #     )
+    #     return review_queryset
 
-    def perform_create(self, serializer):
-        get_object_or_404(User, id=self.kwargs.get('username'))
-        serializer.save(user=self.request.user)
+    # def perform_create(self, serializer):
+    #     serializer.save(author=self.request.user.id)
+
+    def get_serializer_class(self):
+        if self.action in ['list', 'retrieve']:
+            return RecipesSerializerGet
+        return RecipesSerializer
 
     @action(
         detail=False,
         methods=['get'],
         permission_classes=[IsAuthenticated,],
-        serializer_class=[ListIngredientsSerializer,],
+        serializer_class=[DowmloadListIngredientsSerializer,],
         pagination_class=None,
     )
     def download_shopping_cart(self):

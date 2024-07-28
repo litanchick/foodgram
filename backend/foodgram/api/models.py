@@ -54,6 +54,7 @@ class Ingredients(models.Model):
         verbose_name='Еденица измерения',
         on_delete=models.CASCADE,
         max_length=MEASUREMENT_UNIT_LENGHT,
+        related_name='unitingredient'
     )
 
     class Meta():
@@ -101,11 +102,12 @@ class Recipes(models.Model):
         on_delete=models.CASCADE,
         verbose_name='Автор рецепта',
     )
-    slug = models.SlugField(
-        'Уникальный идентификатор рецепта',
-        max_length=SMALL_LIMIT_LENGHT,
-        unique=True,
-    )
+    # slug = models.SlugField(
+    #     'Уникальный идентификатор рецепта',
+    #     max_length=SMALL_LIMIT_LENGHT,
+    #     unique=True,
+    #     auto_created=True,
+    # )
 
     class Meta():
         verbose_name = 'Рецепт'
@@ -139,13 +141,13 @@ class ListIngredients(models.Model):
         Recipes,
         on_delete=models.CASCADE,
         verbose_name='Рецепт',
-        related_name='recipe'
+        related_name='recipeingredient'
     )
     ingredient = models.ForeignKey(
         Ingredients,
         on_delete=models.CASCADE,
         verbose_name='Ингредиент',
-        related_name='ingredient',
+        related_name='recipeingredient',
     )
     amount = models.IntegerField(
         'Количество',
