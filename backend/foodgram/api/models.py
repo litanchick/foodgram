@@ -48,6 +48,7 @@ class Ingredients(models.Model):
     name = models.CharField(
         'Название ингредиента',
         max_length=INGREDIENTS_LIMIT_LENGHT,
+        unique=True
     )
     measurement_unit = models.ForeignKey(
         Units,
@@ -75,6 +76,7 @@ class Recipes(models.Model):
     tags = models.ManyToManyField(
         Tags,
         verbose_name='Список тегов',
+        related_name='tagspecipes'
     )
     image = models.ImageField(
         'Фото рецепта',
@@ -102,12 +104,6 @@ class Recipes(models.Model):
         on_delete=models.CASCADE,
         verbose_name='Автор рецепта',
     )
-    # slug = models.SlugField(
-    #     'Уникальный идентификатор рецепта',
-    #     max_length=SMALL_LIMIT_LENGHT,
-    #     unique=True,
-    #     auto_created=True,
-    # )
 
     class Meta():
         verbose_name = 'Рецепт'
@@ -160,9 +156,15 @@ class ListIngredients(models.Model):
     class Meta():
         verbose_name = 'Список ингредиентов'
         verbose_name_plural = 'Списки ингредиентов'
+        constraints = [
+            models.UniqueConstraint(
+                fields=['recipe', 'ingredient'],
+                name='unique_ingredient_recipe',
+            )
+        ]
 
 
-class DownloadListIngredients(models.Model):
+class ShoppingCartIngredients(models.Model):
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
