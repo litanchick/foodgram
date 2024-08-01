@@ -1,8 +1,7 @@
-from django.core.validators import RegexValidator
-from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
+from django.contrib.auth.models import (AbstractBaseUser, BaseUserManager,
+                                        PermissionsMixin)
+from django.core.validators import RegexValidator, validate_email
 from django.db import models
-from django.core.validators import validate_email
-from django.contrib.auth.models import PermissionsMixin
 
 from .constans import CHAR_MAX_LENGTH, EMAIL_MAX_LENGTH
 

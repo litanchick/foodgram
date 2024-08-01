@@ -1,9 +1,9 @@
 from django.core.validators import MinValueValidator, RegexValidator
 from django.db import models
 from users.models import User
-from .constants import (
-    INGREDIENTS_LIMIT_LENGHT, MEASUREMENT_UNIT_LENGHT,
-    SMALL_LIMIT_LENGHT, TEXT_LIMIT_LENGHT)
+
+from .constants import (INGREDIENTS_LIMIT_LENGHT, MEASUREMENT_UNIT_LENGHT,
+                        SMALL_LIMIT_LENGHT, TEXT_LIMIT_LENGHT)
 
 
 class Tags(models.Model):
@@ -104,11 +104,15 @@ class Recipes(models.Model):
         on_delete=models.CASCADE,
         verbose_name='Автор рецепта',
     )
+    pub_date = models.DateTimeField(
+        'Дата публикации',
+        auto_now_add=True,
+    )
 
     class Meta():
         verbose_name = 'Рецепт'
         verbose_name_plural = 'Рецепты'
-        ordering = ('name',)
+        ordering = ('pub_date',)
 
     def __str__(self):
         return self.name

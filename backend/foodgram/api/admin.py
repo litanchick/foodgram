@@ -1,9 +1,7 @@
 from django.contrib import admin
 
-from .models import (
-    Ingredients, Recipes, Tags, Units, User,
-    ShoppingCartIngredients, ListFavorite, ListIngredients,
-)
+from .models import (Ingredients, ListFavorite, ListIngredients, Recipes,
+                     ShoppingCartIngredients, Tags, Units, User)
 
 
 @admin.register(Ingredients)
@@ -17,7 +15,7 @@ class IngredientsAdmin(admin.ModelAdmin):
 
 @admin.register(Units)
 class UnitsAdmin(admin.ModelAdmin):
-    pass
+    list_display = ('name')
 
 
 @admin.register(ListFavorite)

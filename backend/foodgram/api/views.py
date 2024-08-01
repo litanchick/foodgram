@@ -1,45 +1,35 @@
-from rest_framework import viewsets, filters, status
-from rest_framework.decorators import action
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.generics import get_object_or_404
-from django.shortcuts import get_list_or_404
+import io
+
 import pandas as pd
-from .filtres import NameFilter, RecipeFilter
+from django.shortcuts import get_list_or_404
 from foodgram.settings import ALLOWED_HOSTS
-from .permissions import RecipePermissions
-
-
-from .serializers import (
-    TagsSerializer,
-    IngredientsSerializer,
-    FavoriteSerializer,
-    RecipesSerializer,
-    ListSubscriptionsSerialaizer,
-    UserAvatarSerializer,
-    UserSerializer,
-    RecipesSerializerGet,
-    ShoppingCartIngredientsSerializer,
-    DownloadShoppingCartSerializer,
-)
-from .models import (
-    User, Tags, Ingredients, ListFavorite, Recipes, Units,
-    ListIngredients, ShoppingCartIngredients
-)
+from rest_framework import filters, status, viewsets
+from rest_framework.decorators import action
+from rest_framework.generics import get_object_or_404
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
 from users.models import ListSubscriptions
+
+from .filtres import NameFilter, RecipeFilter
+from .models import (Ingredients, ListFavorite, ListIngredients, Recipes,
+                     ShoppingCartIngredients, Tags, User)
 from .pagination import PaginationNumber
+from .permissions import RecipePermissions
+from .serializers import (FavoriteSerializer, IngredientsSerializer,
+                          ListSubscriptionsSerialaizer,
+                          ListSubscriptionsSerialaizerGet, RecipesSerializer,
+                          RecipesSerializerGet,
+                          ShoppingCartIngredientsSerializer, TagsSerializer,
+                          UserAvatarSerializer, UserSerializer)
 
 
 class CustomUsersViewSet(viewsets.GenericViewSet):
     """Управление пользователями."""
 
-    # permission_classes = [AllowAny,]
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    # lookup_field = 'author'
     filter_backends = (filters.SearchFilter,)
     search_fields = ('username',)
-    # pagination_class = PaginationNumber
 
     @action(
         detail=False,
@@ -84,18 +74,18 @@ class CustomUsersViewSet(viewsets.GenericViewSet):
         pagination_class=PaginationNumber
     )
     def subscribe(self, request, pk=None):
-        user = get_object_or_404(User, id=request.user.id)
+        author = request.user
         subscription_on = get_object_or_404(User, id=pk)
         sibscribe = ListSubscriptions.objects.filter(
-            author=user.id,
+            author=author.id,
             subscription_on=subscription_on.id
         )
         if request.method == 'POST':
             serializer = ListSubscriptionsSerialaizer(
                 data={
-                    'author': user.id,
+                    'author': author.id,
                     'subscription_on': subscription_on.id
-                }
+                }, context={'request': request}
             )
             serializer.is_valid(raise_exception=True)
             serializer.save()
@@ -109,11 +99,16 @@ class CustomUsersViewSet(viewsets.GenericViewSet):
         detail=False,
         methods=['GET'],
         permission_classes=(IsAuthenticated,),
-        serializer_class=ListSubscriptionsSerialaizer,
         pagination_class=PaginationNumber,
     )
-    def subscriptions(self):
-        return ListSubscriptions.objects.filter(author=self.request.user)
+    def subscriptions(self, request):
+        queryset = User.objects.filter(subscription_on__author=request.user)
+        pages = self.paginate_queryset(queryset)
+        serializer = ListSubscriptionsSerialaizerGet(
+            pages, many=True,
+            context={'request': request}
+        )
+        return self.get_paginated_response(serializer.data)
 
 
 class TagsViewSet(viewsets.ReadOnlyModelViewSet):
@@ -129,15 +124,8 @@ class IngredientsViewSet(viewsets.ReadOnlyModelViewSet):
 
     queryset = Ingredients.objects.all()
     serializer_class = IngredientsSerializer
-    # filter_backends = (rest_framework.DjangoFilterBackend,)
     filterset_class = NameFilter
     pagination_class = None
-
-    # def create(self, request):
-    #     measurement_unit = request.data['measurement_unit']
-    #     unit = Units.objects.get(name=measurement_unit)
-    #     Ingredients.objects.create(name=request, measurement_unit=unit)
-    #     return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
 
 class RecipesViewSet(viewsets.ModelViewSet):
@@ -156,42 +144,50 @@ class RecipesViewSet(viewsets.ModelViewSet):
     @action(
         detail=False,
         methods=['GET'],
-        permission_classes=[IsAuthenticated,],
-        serializer_class=DownloadShoppingCartSerializer,
         pagination_class=None,
     )
     def download_shopping_cart(self, request):
-        username = User.objects.get(user=self.kwargs.get('username'))
-        list_recipes = get_list_or_404(ShoppingCartIngredients, user=username)
-        download_file = 'listingredients.csv'
+        list_recipes = get_list_or_404(
+            ShoppingCartIngredients, user=request.user.id
+        )
         col = ['Ингредиенты', 'Единица измерения', 'Количество']
         table_ingredients = pd.DataFrame(columns=col)
-        for recipe_id in list_recipes:
+        for shopping_cart in list_recipes:
             ingredients_recipe = list(
                 ListIngredients.objects.filter(
-                    recipe_id=recipe_id['recipe_id']
+                    recipe_id=shopping_cart.recipe.id
                 ).values()
             )
-            for ingredients, number_row in enumerate(ingredients_recipe):
+            for number_row, ingredients in enumerate(ingredients_recipe):
                 ingredient_id = ingredients['ingredient_id']
                 ingredient = Ingredients.objects.get(id=ingredient_id)
-                measurement_unit_name = Units.objects.get(
-                    id=ingredient.measurement_unit
-                )
                 table_ingredients.at[
                     number_row, 'Ингредиенты'
                 ] = ingredient.name
                 table_ingredients.at[
                     number_row, 'Единица измерения'
-                ] = measurement_unit_name
+                ] = ingredient.measurement_unit
                 table_ingredients.at[
                     number_row, 'Количество'
                 ] = ingredients['amount']
-
-        data_frame = pd.pivot_table(table_ingredients, index=['ingredient'])
-        return Response(
-            data_frame.to_csv(download_file), status=status.HTTP_200_OK
+        data_frame = pd.pivot_table(
+            table_ingredients,
+            index=['Ингредиенты', 'Единица измерения'],
+            aggfunc='sum'
         )
+        csv_buffer = io.StringIO()
+        data_frame.to_csv(csv_buffer, index=True)
+        csv_buffer.seek(0)
+        response = Response(
+            csv_buffer.getvalue(),
+            status=status.HTTP_200_OK,
+            content_type='text/csv',
+            headers={
+                'Content-Disposition':
+                'attachment; filename="listingredients.csv"'
+            }
+        )
+        return response
 
     @action(
         detail=True,
