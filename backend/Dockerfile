@@ -6,10 +6,6 @@ COPY requirements.txt .
 
 RUN pip install -r requirements.txt --no-cache-dir
 
-COPY foodgram/api/management/commands/script_ingredients.py .
-
-COPY foodgram/data/ingredients.csv .
-
 COPY . .
 
 CMD ["gunicorn", "--bind", "0.0.0.0:8500", "foodgram.wsgi"]
