@@ -20,7 +20,7 @@ services:
     volumes:
       - static_volume:/frontend_static
   gateway:
-    image: annabera/foodgram_geteway
+    image: annabera/foodgram_gateway
     env_file: .env
     volumes:
       - static_volume:/staticfiles/
