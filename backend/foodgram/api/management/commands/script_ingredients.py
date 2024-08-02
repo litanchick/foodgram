@@ -1,9 +1,9 @@
 import csv
 
+from api.models import Ingredients, Units
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 
-from api.models import Ingredients, Units
 
 FILE_NAME = 'ingredients.csv'
 DATA_FORMAT = {
