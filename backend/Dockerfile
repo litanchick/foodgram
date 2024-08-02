@@ -6,9 +6,7 @@ COPY requirements.txt .
 
 RUN pip install -r requirements.txt --no-cache-dir
 
-COPY management/ .
-
-COPY ingredients.csv .
+COPY foodgram/api/management/commands/ingredients.csv .
 
 COPY . .
 
