@@ -14,7 +14,7 @@ services:
     volumes:
       - static_volume:/foodgram_static
   frontend:
-    image: annabera/foodgram_frontand
+    image: annabera/foodgram_frontend
     env_file: .env
     command: cp -r /app/build/. /frontend_static/
     volumes:
