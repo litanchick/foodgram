@@ -15,7 +15,7 @@ class IngredientsAdmin(admin.ModelAdmin):
 
 @admin.register(Units)
 class UnitsAdmin(admin.ModelAdmin):
-    list_display = ('name')
+    list_display = ('name',)
 
 
 @admin.register(ListFavorite)
@@ -36,12 +36,17 @@ class RecipesAdmin(admin.ModelAdmin):
         'name', 'text',
         'author', 'cooking_time', 'image',
         'display_tags', 'display_ingredients',
+        'display_recipe_favorite',
     )
-    search_fields = ('name', 'tags', 'author', 'cooking_time')
-    list_filter = ('name', 'tags', 'author', 'cooking_time')
+    search_fields = ('name', 'author__email')
+    list_filter = ('tags',)
     inlines = [
         ListIngredientsInLine,
     ]
+
+    def display_recipe_favorite(self, obj):
+        count = ListFavorite.objects.filter(recipe=obj).count()
+        return count
 
     def display_tags(self, obj):
         return ', '.join([str(item) for item in obj.tags.all()])
@@ -51,6 +56,9 @@ class RecipesAdmin(admin.ModelAdmin):
 
     display_tags.short_description = 'Теги'
     display_ingredients.short_description = 'Ингредиенты'
+    display_recipe_favorite.short_description = (
+        'Количесво добавлений в избранное'
+    )
 
 
 @admin.register(ListIngredients)

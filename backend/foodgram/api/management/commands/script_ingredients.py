@@ -3,12 +3,13 @@ import csv
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 
-from models import Ingredients
-
+from api.models import Ingredients, Units
 
 FILE_NAME = 'ingredients.csv'
-MODEL = Ingredients
-DATA_FORMAT = {'measurement_unit': 'measurement_unit_id'}
+DATA_FORMAT = {
+    'measurement_unit': 'measurement_unit_id',
+    'ingredient_name': 'name',
+}
 
 
 class Command(BaseCommand):
@@ -24,17 +25,18 @@ class Command(BaseCommand):
                     f'В указанном месте нет файла {FILE_NAME}'
                 )
             data = csv.DictReader(datafile)
-            value = []
+            list_ingredients = []
             for cursor in data:
                 args = dict(**cursor)
-                if DATA_FORMAT:
-                    for before, after in DATA_FORMAT.items():
-                        args[after] = args.pop(before)
-                value.append(MODEL(**args))
-            MODEL.objects.bulk_create(
-                value, ignore_conflicts=True)
+                unit, flag = Units.objects.get_or_create(
+                    name=args['measurement_unit']
+                )
+                args['measurement_unit'] = unit
+                list_ingredients.append(Ingredients(**args))
+            Ingredients.objects.bulk_create(
+                list_ingredients, ignore_conflicts=True)
             self.stdout.write(self.style.SUCCESS(
-                f'{FILE_NAME[:-4]} - {len(value)} шт.'
+                f'{FILE_NAME[:-4]} - {len(list_ingredients)} шт.'
             ))
         self.stdout.write(
             'Загрузка данных окончена.'

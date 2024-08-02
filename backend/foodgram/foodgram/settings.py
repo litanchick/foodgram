@@ -1,4 +1,6 @@
+import os
 from pathlib import Path
+
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -6,7 +8,7 @@ SECRET_KEY = 'django-insecure-*!ttr%%#66l-0foxup9ove&5j%c5*v*48&77aqt$z3*p+*c0_4
 
 DEBUG = True
 
-ALLOWED_HOSTS = ['127.0.0.1:8000', 'localhost', '127.0.0.1']
+ALLOWED_HOSTS = ['62.84.121.218', '127.0.0.1', 'localhost', 'mylittlefoodgram.zapto.org']
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -55,8 +57,12 @@ WSGI_APPLICATION = 'foodgram.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.getenv('POSTGRES_DB', 'django'),
+        'USER': os.getenv('POSTGRES_USER', 'django'),
+        'PASSWORD': os.getenv('POSTGRES_PASSWORD', ''),
+        'HOST': os.getenv('DB_HOST', ''),
+        'PORT': os.getenv('DB_PORT', 5432)
     }
 }
 
@@ -76,30 +82,21 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 LANGUAGE_CODE = 'ru-RU'
-
 TIME_ZONE = 'UTC'
-
 USE_I18N = True
-
 USE_L10N = True
-
 USE_TZ = True
 
 STATIC_URL = '/static/'
+STATIC_ROOT = BASE_DIR / 'collected_static'
 
-STATICFILES_DIRS = [
-    BASE_DIR / 'static_dev',
-]
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 LOGIN_REDIRECT_URL = 'foodgram:index'
-
 LOGIN_URL = 'login'
-
-MEDIA_ROOT = BASE_DIR / 'media'
-
-MEDIA_URL = '/media/'
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
