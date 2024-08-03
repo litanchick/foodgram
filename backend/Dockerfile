@@ -8,4 +8,8 @@ RUN pip install -r requirements.txt --no-cache-dir
 
 COPY . .
 
+RUN chown -R appuser .
+
+USER appuser
+
 CMD ["gunicorn", "--bind", "0.0.0.0:8500", "foodgram.wsgi"]
