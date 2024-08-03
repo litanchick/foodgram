@@ -208,7 +208,7 @@ class RecipesSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 'Пустой список ингредиентов.'
             )
-        if ingredients[0]['amount'] < 1:
+        if int(ingredients[0]['amount']) < 1:
             raise serializers.ValidationError(
                 'Количество не может быть меньше 1-го.'
             )
