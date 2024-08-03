@@ -14,7 +14,7 @@ class UserManager(BaseUserManager):
     def _create_user(
             self, email, username,
             first_name, last_name,
-            password
+            password, **extra_fields
     ):
         """Переопределение создания пользователя."""
         if not email:
@@ -38,10 +38,10 @@ class UserManager(BaseUserManager):
     def create_user(
             self, email, username,
             first_name, last_name,
-            password=None
+            password=None, **extra_fields
     ):
         return self._create_user(
-            email, username, first_name, last_name, password
+            email, username, first_name, last_name, password, **extra_fields
         )
 
     def create_superuser(
@@ -51,8 +51,6 @@ class UserManager(BaseUserManager):
     ):
         extra_fields.setdefault('is_staff', True)
         extra_fields.setdefault('is_superuser', True)
-        if extra_fields.get('is_staff') is not True:
-            raise ValueError('Superuser must have is_staff=True.')
         if extra_fields.get('is_superuser') is not True:
             raise ValueError('Superuser must have is_superuser=True.')
         return self._create_user(
