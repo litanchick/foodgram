@@ -49,7 +49,10 @@ class UserManager(BaseUserManager):
             first_name, last_name,
             password, **extra_fields
     ):
+        extra_fields.setdefault('is_staff', True)
         extra_fields.setdefault('is_superuser', True)
+        if extra_fields.get('is_staff') is not True:
+            raise ValueError('Superuser must have is_staff=True.')
         if extra_fields.get('is_superuser') is not True:
             raise ValueError('Superuser must have is_superuser=True.')
         return self._create_user(
@@ -90,7 +93,8 @@ class User(AbstractBaseUser, PermissionsMixin):
         null=True,
         default=None,
     )
-    is_active = models.BooleanField(default=True)
+    is_active = models.BooleanField(default=True, blank=True)
+    is_staff = models.BooleanField(default=True, blank=True)
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username', 'first_name', 'last_name']
 
