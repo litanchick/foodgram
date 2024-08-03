@@ -1,3 +1,4 @@
+
 from django.contrib.auth.models import (AbstractBaseUser, BaseUserManager,
                                         PermissionsMixin)
 from django.core.validators import RegexValidator, validate_email
@@ -91,8 +92,6 @@ class User(AbstractBaseUser, PermissionsMixin):
         null=True,
         default=None,
     )
-    is_active = models.BooleanField(default=True, blank=True)
-    is_staff = models.BooleanField(default=True, blank=True)
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username', 'first_name', 'last_name']
 
