@@ -1,6 +1,7 @@
 volumes:
   pg_data_production:
   static_volume:
+  media:
 
 services:
   db:
@@ -12,7 +13,10 @@ services:
     image: annabera/foodgram_backend
     env_file: .env
     volumes:
-      - static_volume:/foodgram_static
+      - static_volume:/backend_static
+      - media:/app/media
+    depends_on: 
+      - db
   frontend:
     image: annabera/foodgram_frontend
     env_file: .env
@@ -22,7 +26,11 @@ services:
   gateway:
     image: annabera/foodgram_gateway
     env_file: .env
+    depends_on: 
+      - backend
+      - frontend
     volumes:
       - static_volume:/staticfiles/
+      - media:/app/media
     ports:
       - 9500:80
