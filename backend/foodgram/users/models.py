@@ -115,3 +115,21 @@ class User(AbstractBaseUser, PermissionsMixin):
         verbose_name = 'Пользователь'
         verbose_name_plural = 'Пользователи'
         ordering = ('username',)
+
+
+class ListSubscriptions(models.Model):
+    author = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        verbose_name='Пользователь',
+    )
+    subscription_on = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        verbose_name='На кого подписан',
+        related_name='subscription_on',
+    )
+
+    class Meta:
+        verbose_name = 'Подписка'
+        verbose_name_plural = 'Список подписок'
