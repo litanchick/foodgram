@@ -1,14 +1,7 @@
-from rest_framework.pagination import (LimitOffsetPagination,
-                                       PageNumberPagination)
+from rest_framework.pagination import LimitOffsetPagination
 
 
 class LimitNumber(LimitOffsetPagination):
-    page_size = 6
-    page_size_query_param = 'limit'
-    max_page_size = 100
-
-
-class PaginationNumber(PageNumberPagination):
     page_size = 10
-    page_size_query_param = 'page'
+    page_size_query_param = 'limit'
     max_page_size = 100
