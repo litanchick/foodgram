@@ -13,7 +13,7 @@ from foodgram.settings import ALLOWED_HOSTS
 from .filtres import NameFilter, RecipeFilter
 from .models import (Ingredients, ListFavorite, ListIngredients, Recipes,
                      ShoppingCartIngredients, Tags, User)
-from .pagination import PaginationNumber
+from .pagination import LimitNumber, PaginationNumber
 from .permissions import RecipePermissions
 from .serializers import (FavoriteSerializer, IngredientsSerializer,
                           ListSubscriptionsSerialaizer,
@@ -132,7 +132,7 @@ class RecipesViewSet(viewsets.ModelViewSet):
     """Управление рецептами."""
 
     queryset = Recipes.objects.all()
-    pagination_class = PaginationNumber
+    pagination_class = [PaginationNumber, LimitNumber]
     filterset_class = RecipeFilter
     permission_classes = [RecipePermissions]
 

@@ -7,7 +7,7 @@ SECRET_KEY = 'django-insecure-*!ttr%%#66l-0foxup9ove&5j%c5*v*48&77aqt$z3*p+*c0_4
 
 DEBUG = True
 
-ALLOWED_HOSTS = ['62.84.121.218', '127.0.0.1', 'localhost', 'mylittlefoodgram.zapto.org']
+ALLOWED_HOSTS = ['mylittlefoodgram.zapto.org', '62.84.121.218', '127.0.0.1', 'localhost']
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -106,7 +106,6 @@ REST_FRAMEWORK = {
     ],
     'DEFAULT_PAGINATION_CLASS': [
         'rest_framework.pagination.LimitOffsetPagination',
-        'rest_framework.pagination.PageNumberPagination',
     ],
     'PAGE_SIZE': 10,
 }
