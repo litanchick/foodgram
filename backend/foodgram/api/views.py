@@ -1,7 +1,6 @@
-import io
-
 import pandas as pd
 from django.shortcuts import get_list_or_404
+from django.http import HttpResponse
 from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.generics import get_object_or_404
@@ -153,42 +152,39 @@ class RecipesViewSet(viewsets.ModelViewSet):
         )
         col = ['Ингредиенты', 'Единица измерения', 'Количество']
         table_ingredients = pd.DataFrame(columns=col)
+
         for shopping_cart in list_recipes:
             ingredients_recipe = list(
                 ListIngredients.objects.filter(
                     recipe_id=shopping_cart.recipe.id
                 ).values()
             )
-            for number_row, ingredients in enumerate(ingredients_recipe):
+            temp_pd = pd.DataFrame(columns=col)
+
+            for ingredients in ingredients_recipe:
                 ingredient_id = ingredients['ingredient_id']
                 ingredient = Ingredients.objects.get(id=ingredient_id)
-                table_ingredients.at[
-                    number_row, 'Ингредиенты'
-                ] = ingredient.name
-                table_ingredients.at[
-                    number_row, 'Единица измерения'
-                ] = ingredient.measurement_unit
-                table_ingredients.at[
-                    number_row, 'Количество'
-                ] = ingredients['amount']
-        data_frame = pd.pivot_table(
-            table_ingredients,
-            index=['Ингредиенты', 'Единица измерения'],
-            aggfunc='sum'
-        )
-        csv_buffer = io.StringIO()
-        data_frame.to_csv(csv_buffer, index=True)
-        csv_buffer.seek(0)
-        response = Response(
-            csv_buffer.getvalue(),
-            status=status.HTTP_200_OK,
-            content_type='text/csv',
-            headers={
-                'Content-Disposition':
-                'attachment; filename="listingredients.csv"'
-            }
-        )
-        return response
+                new_row = {
+                    'Ингредиенты': ingredient.name,
+                    'Единица измерения': ingredient.measurement_unit,
+                    'Количество': ingredients['amount']
+                }
+                temp_pd = pd.concat(
+                    [temp_pd, pd.DataFrame([new_row])], ignore_index=True
+                )
+            table_ingredients = pd.concat(
+                [table_ingredients, temp_pd], ignore_index=True
+            )
+        data_frame = table_ingredients.groupby(
+            ['Ингредиенты', 'Единица измерения'], as_index=False
+        ).sum()
+        content = "Ингредиенты\tЕдиница измерения\tКоличество\n"
+        for index, row in data_frame.iterrows():
+            content += (
+                f"{row['Ингредиенты']}\t "
+                f"{row['Единица измерения']}\t{row['Количество']}\n"
+            )
+        return HttpResponse(content, content_type='text/plain')
 
     @action(
         detail=True,
