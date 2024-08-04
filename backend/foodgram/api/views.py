@@ -6,6 +6,7 @@ from rest_framework.decorators import action
 from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.pagination import PageNumberPagination
 from users.models import ListSubscriptions
 
 from foodgram.settings import ALLOWED_HOSTS
@@ -13,7 +14,7 @@ from foodgram.settings import ALLOWED_HOSTS
 from .filtres import NameFilter, RecipeFilter
 from .models import (Ingredients, ListFavorite, ListIngredients, Recipes,
                      ShoppingCartIngredients, Tags, User)
-from .pagination import LimitNumber, PageNumberPagination
+from .pagination import LimitNumber
 from .permissions import RecipePermissions
 from .serializers import (FavoriteSerializer, IngredientsSerializer,
                           ListSubscriptionsSerialaizer,
