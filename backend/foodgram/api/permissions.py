@@ -19,6 +19,6 @@ class RecipePermissions(BasePermission):
         )
 
     def has_permission(self, request, view):
-        return request.user.is_anonymous and (
-            request.method not in permissions.SAFE_METHODS
+        return not request.user.is_anonymous and (
+            request.method in permissions.SAFE_METHODS
         )
