@@ -14,14 +14,11 @@ class CustomPermissions(BasePermission):
 
 class RecipePermissions(BasePermission):
     def has_object_permission(self, request, view, obj):
-        if request.method in permissions.SAFE_METHODS:
-            return True
-        return obj.author == request.user
+        return request.method in permissions.SAFE_METHODS or (
+            obj.author == request.user
+        )
 
     def has_permission(self, request, view):
-        if request.user.is_anonymous and (
+        return request.user.is_anonymous and (
             request.method not in permissions.SAFE_METHODS
-        ):
-            return False
-        else:
-            return True
+        )

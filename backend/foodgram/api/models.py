@@ -109,7 +109,7 @@ class Recipes(models.Model):
         auto_now_add=True,
     )
 
-    class Meta():
+    class Meta:
         verbose_name = 'Рецепт'
         verbose_name_plural = 'Рецепты'
         ordering = ('pub_date',)
@@ -174,7 +174,7 @@ class ShoppingCartIngredients(models.Model):
         on_delete=models.CASCADE,
         verbose_name='Пользователь'
     )
-    recipe = recipe = models.ForeignKey(
+    recipe = models.ForeignKey(
         Recipes,
         on_delete=models.CASCADE,
         verbose_name='Рецепт',

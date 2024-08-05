@@ -126,22 +126,18 @@ class RecipesSerializerGet(serializers.ModelSerializer):
         request = self.context.get('request')
         if request is None or request.user.is_anonymous:
             return False
-        user_id = request.user
-        recipe_id = data.id
         return ListFavorite.objects.filter(
-            user=user_id,
-            recipe_id=recipe_id
+            user=request.user,
+            recipe_id=data.id
         ).exists()
 
     def get_is_in_shopping_cart(self, data):
         request = self.context.get('request')
         if request is None or request.user.is_anonymous:
             return False
-        user_id = request.user
-        recipe_id = data.id
         return ShoppingCartIngredients.objects.filter(
-            user=user_id,
-            recipe_id=recipe_id
+            user=request.user,
+            recipe_id=data.id
         ).exists()
 
 
@@ -169,8 +165,9 @@ class RecipesSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         ingredients = validated_data.pop('ingredients')
         tags = validated_data.pop('tags')
-        user = self.context['request'].user
-        recipe = Recipes.objects.create(author=user, **validated_data)
+        recipe = Recipes.objects.create(
+            author=self.context['request'].user, **validated_data
+        )
         for ingredient in ingredients:
             ListIngredients.objects.get_or_create(
                 ingredient_id=ingredient['id'],
@@ -252,10 +249,8 @@ class ShoppingCartIngredientsSerializer(serializers.ModelSerializer):
         )
 
     def to_representation(self, instance):
-        request = self.context.get('request')
-        recipe = instance.recipe
         return ShortRecipeSerializer(
-            recipe, context={'request': request}
+            instance.recipe, context={'request': self.context.get('request')}
         ).data
 
 
@@ -273,10 +268,8 @@ class FavoriteSerializer(serializers.ModelSerializer):
         )
 
     def to_representation(self, instance):
-        request = self.context.get('request')
-        recipe = instance.recipe
         return ShortRecipeSerializer(
-            recipe, context={'request': request}
+            instance.recipe, context={'request': self.context.get('request')}
         ).data
 
 
@@ -328,19 +321,16 @@ class ListSubscriptionsSerialaizer(serializers.ModelSerializer):
         )
 
     def validate(self, validated_data):
-        author = validated_data['author']
-        subscription_on = validated_data['subscription_on']
-        if author == subscription_on:
+        if validated_data['author'] == validated_data['subscription_on']:
             raise serializers.ValidationError(
                 'Нельзя подписаться на самого себя!'
             )
         return validated_data
 
     def to_representation(self, instance):
-        request = self.context.get('request')
         return ListSubscriptionsSerialaizerGet(
             instance.subscription_on,
-            context={'request': request}
+            context={'request': self.context.get('request')}
         ).data
 
 
