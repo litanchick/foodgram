@@ -1,4 +1,4 @@
-from django.core.validators import MinValueValidator, RegexValidator
+from django.core.validators import MinValueValidator
 from django.db import models
 from users.models import User
 
@@ -11,12 +11,8 @@ class Tags(models.Model):
         'Название тега',
         max_length=SMALL_LIMIT_LENGHT,
     )
-    slug = models.CharField(
+    slug = models.SlugField(
         'Уникальный идентификатор тега',
-        validators=[RegexValidator(
-            regex=r'^[-a-zA-Z0-9_]+$',
-            message='Формат данных не соответствует допустимым символам.')
-        ],
         max_length=SMALL_LIMIT_LENGHT,
         unique=True,
     )
@@ -81,8 +77,6 @@ class Recipes(models.Model):
     image = models.ImageField(
         'Фото рецепта',
         upload_to='recipes/images/',
-        null=True,
-        default=None,
     )
     name = models.CharField(
         'Название рецепта',
@@ -91,7 +85,7 @@ class Recipes(models.Model):
     text = models.TextField(
         'Описание рецепта',
     )
-    cooking_time = models.IntegerField(
+    cooking_time = models.PositiveSmallIntegerField(
         'Время приготоваления (мин)',
         validators=[MinValueValidator(
             1,
