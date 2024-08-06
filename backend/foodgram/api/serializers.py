@@ -2,6 +2,7 @@ from drf_extra_fields.fields import Base64ImageField
 from rest_framework import serializers
 from rest_framework.validators import UniqueTogetherValidator
 from users.models import ListSubscriptions, User
+from django.db import transaction
 
 from .models import (Ingredients, ListFavorite, ListIngredients, Recipes,
                      ShoppingCartIngredients, Tags)
@@ -74,9 +75,6 @@ class ListIngredientsSerializer(serializers.ModelSerializer):
     measurement_unit = serializers.ReadOnlyField(
         source='ingredient.measurement_unit.name'
     )
-    amount = serializers.PrimaryKeyRelatedField(
-        queryset=ListIngredients.objects.all()
-    )
 
     class Meta:
         model = ListIngredients
@@ -129,13 +127,29 @@ class RecipesSerializerGet(serializers.ModelSerializer):
         ).exists()
 
 
+class AddIngredientSerializer(serializers.ModelSerializer):
+    """Связывает ингредиенты с их количеством."""
+
+    id = serializers.PrimaryKeyRelatedField(queryset=Ingredients.objects.all())
+    amount = serializers.IntegerField()
+
+    class Meta:
+        model = ListIngredients
+        fields = ("id", "amount")
+
+    def validate(self, data):
+        if data['amount'] < 1:
+            raise serializers.ValidationError(
+                'Количество не может быть меньше 1-го.'
+            )
+        return data
+
+
 class RecipesSerializer(serializers.ModelSerializer):
     """Класс сериализаторов рецептов."""
 
     image = Base64ImageField()
-    ingredients = serializers.ListField(
-        child=serializers.DictField(), allow_empty=False, write_only=True
-    )
+    ingredients = AddIngredientSerializer(many=True)
     tags = serializers.SlugRelatedField(
         slug_field='id', queryset=Tags.objects.all(), many=True, required=True
     )
@@ -151,33 +165,25 @@ class RecipesSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         return RecipesSerializerGet(instance, context=self.context).data
 
+    @transaction.atomic
     def create(self, validated_data):
         ingredients = validated_data.pop('ingredients')
         tags = validated_data.pop('tags')
         recipe = Recipes.objects.create(
             author=self.context['request'].user, **validated_data
         )
-        for ingredient in ingredients:
-            ListIngredients.objects.get_or_create(
-                ingredient_id=ingredient['id'],
-                recipe=recipe,
-                amount=ingredient['amount']
-            )
+        self.list_ingredients_create(ingredients, recipe)
         recipe.tags.set(tags)
         return recipe
 
+    @transaction.atomic
     def update(self, instance, validated_data):
         ingredients = validated_data.pop('ingredients')
         tags = validated_data.pop('tags')
         recipe = super().update(instance, validated_data)
         if ingredients:
             recipe.ingredients.clear()
-            for ingredient in ingredients:
-                ListIngredients.objects.create(
-                    ingredient_id=ingredient['id'],
-                    recipe=recipe,
-                    amount=ingredient['amount']
-                )
+            self.list_ingredients_create(ingredients, recipe)
         if tags:
             recipe.tags.clear()
             recipe.tags.set(tags)
@@ -198,16 +204,6 @@ class RecipesSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 'Пустой список ингредиентов.'
             )
-        if int(ingredients[0]['amount']) < 1:
-            raise serializers.ValidationError(
-                'Количество не может быть меньше 1-го.'
-            )
-        if not Ingredients.objects.filter(
-            id=ingredients[0]['id']
-        ).exists():
-            raise serializers.ValidationError(
-                'Такого ингредиента нет в базе.'
-            )
         if len(set(tags)) != len(tags):
             raise serializers.ValidationError(
                 'Нельзя добавлять одинаковые теги в рецепт.'
@@ -218,6 +214,18 @@ class RecipesSerializer(serializers.ModelSerializer):
                 'Нельзя добавлять одинаковые ингредиенты в рецепт.'
             )
         return value
+
+    def list_ingredients_create(self, ingredients, recipe):
+        ListIngredients.objects.bulk_create(
+            [
+                ListIngredients(
+                    recipe=recipe,
+                    ingredient=ingredient['id'],
+                    amount=ingredient['amount'],
+                )
+                for ingredient in ingredients
+            ]
+        )
 
 
 class ShortRecipeSerializer(serializers.ModelSerializer):

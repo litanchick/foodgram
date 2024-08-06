@@ -1,12 +1,11 @@
-import pandas as pd
 from django.http import HttpResponse
-from django.shortcuts import get_list_or_404
 from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from users.models import ListSubscriptions
+from django.db.models import Sum
 
 from foodgram.settings import ALLOWED_HOSTS
 
@@ -146,44 +145,29 @@ class RecipesViewSet(viewsets.ModelViewSet):
         pagination_class=None,
     )
     def download_shopping_cart(self, request):
-        list_recipes = get_list_or_404(
-            ShoppingCartIngredients, user=request.user.id
+        user = request.user
+        if not user.user_shopping.exists():
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+        list_recipes = (
+            ListIngredients.objects.filter(
+                recipe__recipe_download__user=user
+            )
+            .values('ingredient__name', 'ingredient__measurement_unit__name')
+            .annotate(amount=Sum('amount'))
         )
-        col = ['Ингредиенты', 'Единица измерения', 'Количество']
-        table_ingredients = pd.DataFrame(columns=col)
-
-        for shopping_cart in list_recipes:
-            ingredients_recipe = list(
-                ListIngredients.objects.filter(
-                    recipe_id=shopping_cart.recipe.id
-                ).values()
-            )
-            temp_pd = pd.DataFrame(columns=col)
-
-            for ingredients in ingredients_recipe:
-                ingredient_id = ingredients['ingredient_id']
-                ingredient = Ingredients.objects.get(id=ingredient_id)
-                new_row = {
-                    'Ингредиенты': ingredient.name,
-                    'Единица измерения': ingredient.measurement_unit,
-                    'Количество': ingredients['amount']
-                }
-                temp_pd = pd.concat(
-                    [temp_pd, pd.DataFrame([new_row])], ignore_index=True
-                )
-            table_ingredients = pd.concat(
-                [table_ingredients, temp_pd], ignore_index=True
-            )
-        data_frame = table_ingredients.groupby(
-            ['Ингредиенты', 'Единица измерения'], as_index=False
-        ).sum()
-        content = "Ингредиенты\tЕдиница измерения\tКоличество\n"
-        for index, row in data_frame.iterrows():
-            content += (
-                f"{row['Ингредиенты']}\t "
-                f"{row['Единица измерения']}\t{row['Количество']}\n"
-            )
-        return HttpResponse(content, content_type='text/plain')
+        filename = f'{user.email}ingredients.txt'
+        content = ''
+        content += "\n".join(
+            [
+                f'{ingredient["ingredient__name"]} -'
+                f' {ingredient["amount"]}'
+                f' {ingredient["ingredient__measurement_unit__name"]}'
+                for ingredient in list_recipes
+            ]
+        )
+        response = HttpResponse(content, content_type='text/plain')
+        response['Content-Disposition'] = f'attachment; filename={filename}'
+        return response
 
     @action(
         detail=True,
