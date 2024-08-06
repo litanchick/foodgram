@@ -12,7 +12,7 @@ from foodgram.settings import ALLOWED_HOSTS
 from .filtres import NameFilter, RecipeFilter
 from .models import (Ingredients, ListFavorite, ListIngredients, Recipes,
                      ShoppingCartIngredients, Tags, User)
-from .pagination import LimitNumber, PaginationNumber
+from .pagination import PageLimitPagination
 from .permissions import RecipePermissions
 from .serializers import (FavoriteSerializer, IngredientsSerializer,
                           ListSubscriptionsSerialaizer,
@@ -69,7 +69,7 @@ class CustomUsersViewSet(viewsets.GenericViewSet):
         methods=['POST', 'DELETE'],
         permission_classes=(IsAuthenticated,),
         serializer_class=ListSubscriptionsSerialaizer,
-        pagination_class=LimitNumber
+        pagination_class=PageLimitPagination
     )
     def subscribe(self, request, pk=None):
         author = request.user
@@ -97,7 +97,7 @@ class CustomUsersViewSet(viewsets.GenericViewSet):
         detail=False,
         methods=['GET'],
         permission_classes=(IsAuthenticated,),
-        pagination_class=LimitNumber,
+        pagination_class=PageLimitPagination,
     )
     def subscriptions(self, request):
         queryset = User.objects.filter(subscription_on__author=request.user)
@@ -130,7 +130,7 @@ class RecipesViewSet(viewsets.ModelViewSet):
     """Управление рецептами."""
 
     queryset = Recipes.objects.all()
-    pagination_class = PaginationNumber
+    pagination_class = PageLimitPagination
     filterset_class = RecipeFilter
     permission_classes = [RecipePermissions]
 
