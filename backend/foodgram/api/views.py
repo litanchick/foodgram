@@ -6,9 +6,8 @@ from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from foodgram.settings import ALLOWED_HOSTS
 from users.models import ListSubscriptions
-
+from foodgram.settings import ALLOWED_HOSTS
 from .filtres import NameFilter, RecipeFilter
 from .models import (Ingredients, ListFavorite, ListIngredients, Recipes,
                      ShoppingCartIngredients, Tags, User)
