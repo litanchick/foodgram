@@ -17,7 +17,7 @@ class Tags(models.Model):
         unique=True,
     )
 
-    class Meta():
+    class Meta:
         verbose_name = 'Тег'
         verbose_name_plural = 'Теги'
         ordering = ('name',)
@@ -32,7 +32,7 @@ class Units(models.Model):
         max_length=SMALL_LIMIT_LENGHT,
     )
 
-    class Meta():
+    class Meta:
         verbose_name = 'Еденица измерения'
         verbose_name_plural = 'Еденицы измерения'
 
@@ -54,7 +54,7 @@ class Ingredients(models.Model):
         related_name='unitingredient'
     )
 
-    class Meta():
+    class Meta:
         verbose_name = 'Ингредиент'
         verbose_name_plural = 'Ингредиенты'
         ordering = ('name',)
@@ -125,7 +125,7 @@ class ListFavorite(models.Model):
         verbose_name='Пользователь',
     )
 
-    class Meta():
+    class Meta:
         verbose_name = 'Избранное'
         verbose_name_plural = 'Список избранного'
 
@@ -151,7 +151,7 @@ class ListIngredients(models.Model):
         )]
     )
 
-    class Meta():
+    class Meta:
         verbose_name = 'Список ингредиентов'
         verbose_name_plural = 'Списки ингредиентов'
         constraints = [
@@ -176,6 +176,6 @@ class ShoppingCartIngredients(models.Model):
         related_name='recipe_download',
     )
 
-    class Meta():
+    class Meta:
         verbose_name = 'Добавлен в список покупок'
         verbose_name_plural = 'Добавленые в списки покупок'

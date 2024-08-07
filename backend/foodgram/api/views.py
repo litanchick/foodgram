@@ -7,8 +7,6 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from users.models import ListSubscriptions
 
-from foodgram.settings import ALLOWED_HOSTS
-
 from .filtres import NameFilter, RecipeFilter
 from .models import (Ingredients, ListFavorite, ListIngredients, Recipes,
                      ShoppingCartIngredients, Tags, User)
@@ -225,7 +223,8 @@ class RecipesViewSet(viewsets.ModelViewSet):
     )
     def get_link(self, request, pk):
         get_object_or_404(Recipes, id=pk)
+        link = request.build_absolute_uri(f'/api/recipes/{pk}/')
         return Response(
-            {'short-link': f'https://{ALLOWED_HOSTS[0]}/api/recipes/{pk}/'},
+            {'short-link': link},
             status=status.HTTP_200_OK
         )
