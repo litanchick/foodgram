@@ -13,5 +13,3 @@ class CustomPermissions(BasePermission):
             request.method in ['list', 'retrieve', 'GET']
         ):
             return 'rest_framework.permissions.AllowAny'
-        else:
-            return 'rest_framework.permissions.IsAuthenticated'
