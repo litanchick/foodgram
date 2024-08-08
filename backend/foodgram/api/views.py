@@ -154,8 +154,7 @@ class RecipesViewSet(viewsets.ModelViewSet):
             .annotate(amount=Sum('amount'))
         )
         filename = f'{user.email}ingredients.txt'
-        content = ''
-        content += "\n".join(
+        content = "\n".join(
             [
                 f'{ingredient["ingredient__name"]} -'
                 f' {ingredient["amount"]}'
